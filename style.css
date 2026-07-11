@@ -424,52 +424,58 @@ a:focus-visible, button:focus-visible {
 /* 3D Modelin duracağı sabit arka plan katmanı */
 #canvas-container {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 0; /* En arkada yer alır */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Ekranın tam ortasına yerleştirir */
+    width: 600px;  /* Genişlik (Masaüstü için ideal boyut, istediğiniz gibi değiştirebilirsiniz) */
+    height: 600px; /* Yükseklik */
+    z-index: 5;    /* İçeriklerin arkasında ama arka planın önünde durması için ara katman */
     overflow: hidden;
-    background-color: var(--ink); /* Spline yüklenene kadar boşluk kalmasın */
+    cursor: grab;  /* Kullanıcıya tutulabilir olduğunu gösteren el ikonu */
+    user-select: none;
+}
+
+#canvas-container:active {
+    cursor: grabbing; /* Tutulduğunda yumruk ikonu olur */
 }
 
 #canvas-container spline-viewer {
     width: 100%;
     height: 100%;
 }
-
 /* Ön taraftaki site içeriklerinin katmanı */
 #site-content {
     position: relative;
-    z-index: 1; /* 3D animasyonun üzerinde durur */
+    z-index: 10; /* Yazılar ve butonlar ajanın da önünde kalmalı ki okunabilsin */
     width: 100%;
-    pointer-events: none; /* Farenin arkadaki 3D objeyle etkileşime girmesini sağlar */
+    pointer-events: none; 
 }
 
-/* Sitedeki tüm tıklanabilir elementleri tekrar aktif hale getiriyoruz */
+/* Sitedeki tüm tıklanabilir elementleri aktif tutuyoruz */
 #site-content a, 
 #site-content button, 
 #site-content input,
 #site-content textarea,
 .sector-card,
-.thread-step {
+.thread-step,
+.site-header,
+.site-footer {
     pointer-events: auto;
 }
 
-/* Bölümlerin (Sections) arka plan renklerini şeffaf yapıyoruz ki 3D arkadan süzülsün */
+/* Arka planları şeffaflaştırıyoruz */
 .hero, .process, .sectors, .reach, .cta-section {
     background: transparent !important;
 }
 
-/* .idea-moment section'ının koyu gri düz arka plan rengini şeffaflaştırıp, 
-   hafif cam efekti (backdrop-filter) vererek 3D ağı efsanevi bir şekilde gölgeliyoruz */
 .idea-moment {
     position: relative;
     padding: 160px 0;
-    background: rgba(20, 31, 27, 0.4) !important; /* Mevcut var(--panel) renginin transparan hali */
-    backdrop-filter: blur(8px); /* Derinlik hissi katacak cam efekti */
+    background: rgba(20, 31, 27, 0.2) !important; /* Ajan altından geçerken çok kapanmasın diye opaklığı düşürdük */
+    backdrop-filter: blur(4px); 
     border-top: 1px solid var(--panel-line);
     border-bottom: 1px solid var(--panel-line);
     overflow: hidden;
     text-align: center;
+    z-index: 11; /* Cam efektli bölüm ajanın üstünü örtsün (derinlik hissi için) */
 }
