@@ -151,18 +151,15 @@ function setupCanvas(canvas) {
     buildTargets();
   });
 
-  // Build a simple bulb silhouette out of points (bulb head + filament + base)
   function bulbPoints() {
     const cx = w / 2, cy = h / 2 - 20;
     const scale = Math.min(w, h) * 0.14;
     const pts = [];
-    // bulb head (circle arc, upper 300deg)
     const steps = 60;
     for (let i = 0; i < steps; i++) {
       const a = (i / steps) * Math.PI * 2;
       pts.push({ x: cx + Math.cos(a) * scale, y: cy + Math.sin(a) * scale * 0.95 - scale * 0.15 });
     }
-    // base (screw base) — a few horizontal lines below
     for (let row = 0; row < 4; row++) {
       for (let i = -3; i <= 3; i++) {
         pts.push({
@@ -171,7 +168,6 @@ function setupCanvas(canvas) {
         });
       }
     }
-    // filament squiggle
     for (let i = 0; i < 14; i++) {
       const t = i / 13;
       pts.push({
@@ -195,7 +191,7 @@ function setupCanvas(canvas) {
   }
   buildTargets();
 
-  let progress = 0; // 0 -> scattered, 1 -> formed
+  let progress = 0;
   let dir = 1;
   let visible = false;
 
@@ -214,10 +210,10 @@ function setupCanvas(canvas) {
     } else if (prefersReducedMotion) {
       progress = 1;
     } else if (progress === 0) {
-      progress = 0.62; // start mostly-formed even before scroll trigger
+      progress = 0.62;
     }
 
-    const ease = progress * progress * (3 - 2 * progress); // smoothstep
+    const ease = progress * progress * (3 - 2 * progress);
 
     particles.forEach(p => {
       const x = p.x + (p.tx - p.x) * ease;
@@ -263,7 +259,6 @@ function setupCanvas(canvas) {
     }
   }
 
-  // Wireframe rings: a few parallels + meridians, each a dense loop of points
   const rings = [];
   const parallels = [-0.6, -0.25, 0, 0.25, 0.6].map(f => f * Math.PI / 2);
   parallels.forEach(lat => {
@@ -299,7 +294,6 @@ function setupCanvas(canvas) {
       return { x, y: p.y, z };
     };
 
-    // Draw wireframe rings (lines), back-to-front by average depth
     const projRings = rings.map(ring => {
       const pr = ring.map(project);
       const avgZ = pr.reduce((s, p) => s + p.z, 0) / pr.length;
@@ -319,10 +313,9 @@ function setupCanvas(canvas) {
       ctx.stroke();
     });
 
-    // Draw point cloud on top
     const sorted = points.map(project).sort((a, b) => a.z - b.z);
     sorted.forEach(p => {
-      const depth = (p.z + 1) / 2; // 0..1
+      const depth = (p.z + 1) / 2;
       const sx = cx + p.x * radius;
       const sy = cy + p.y * radius;
       const size = 0.8 + depth * 1.8;
@@ -337,4 +330,76 @@ function setupCanvas(canvas) {
     if (!prefersReducedMotion) requestAnimationFrame(draw);
   }
   draw();
+})();
+
+/* ============================================
+   HYBRID MOUSE FOLLOW + DRAG & DROP SYSTEM
+   ============================================ */
+(function hybridAgentSystem() {
+  const agent = document.getElementById("canvas-container");
+  if (!agent) return;
+
+  // Koordinat takipleri
+  let mouseX = window.innerWidth / 2;
+  let mouseY = window.innerHeight / 2;
+  let currentX = window.innerWidth / 2;
+  let currentY = window.innerHeight / 2;
+
+  let isDragging = false;
+  let hasBeenDragged = false; // Kullanıcı nesneyi elle manipüle etti mi?
+
+  // İlk pozisyon ataması (Ekranın sağ ortası - estetik bir başlangıç için)
+  agent.style.left = `${currentX}px`;
+  agent.style.top = `${currentY}px`;
+
+  // Sürükleme Başlangıcı
+  agent.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    hasBeenDragged = true; // Sürüklenme başladığı an mouse takibini kalıcı kapatır
+    agent.classList.add("dragging");
+
+    let shiftX = e.clientX - agent.getBoundingClientRect().left - agent.offsetWidth / 2;
+    let shiftY = e.clientY - agent.getBoundingClientRect().top - agent.offsetHeight / 2;
+
+    function moveAt(clientX, clientY) {
+      currentX = clientX - shiftX;
+      currentY = clientY - shiftY;
+      agent.style.left = `${currentX}px`;
+      agent.style.top = `${currentY}px`;
+    }
+
+    function onMouseMove(event) {
+      if (!isDragging) return;
+      moveAt(event.clientX, event.clientY);
+    }
+
+    document.addEventListener("mousemove", onMouseMove);
+
+    document.addEventListener("mouseup", () => {
+      isDragging = false;
+      agent.classList.remove("dragging");
+      document.removeEventListener("mousemove", onMouseMove);
+    }, { once: true });
+  });
+
+  // Eğer kullanıcı henüz dokunmadıysa, fareyi ekranda yumuşakça takip etme motoru
+  window.addEventListener("mousemove", (e) => {
+    if (hasBeenDragged) return; // Kullanıcı sürüklediyse takip mekanizmasını yorma
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+  });
+
+  function updateFollowAnimation() {
+    if (!hasBeenDragged && !prefersReducedMotion) {
+      // Lerp (Linear Interpolation) ile akıcı/gecikmeli takip hissiyatı (%6 hız faktörü)
+      currentX += (mouseX - currentX) * 0.06;
+      currentY += (mouseY - currentY) * 0.06;
+
+      agent.style.left = `${currentX}px`;
+      agent.style.top = `${currentY}px`;
+    }
+    requestAnimationFrame(updateFollowAnimation);
+  }
+  
+  updateFollowAnimation();
 })();
