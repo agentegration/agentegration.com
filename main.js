@@ -57,8 +57,6 @@ function setupCanvas(canvas) {
 
 /* ============================================
    HERO: particle network ("voice / agent brain")
-   Nodes connected by lines, gently drifting,
-   pulsing brighter near the cursor.
    ============================================ */
 (function heroBrain() {
   const canvas = document.getElementById('brainCanvas');
@@ -136,8 +134,7 @@ function setupCanvas(canvas) {
 })();
 
 /* ============================================
-   IDEA MOMENT: particles converging into a
-   lightbulb outline, then dispersing (loop).
+   IDEA MOMENT: particles converging into a bulb
    ============================================ */
 (function ideaBulb() {
   const canvas = document.getElementById('bulbCanvas');
@@ -230,7 +227,7 @@ function setupCanvas(canvas) {
 })();
 
 /* ============================================
-   REACH: rotating wireframe globe made of dots
+   REACH: rotating wireframe globe
    ============================================ */
 (function reachGlobe() {
   const canvas = document.getElementById('globeCanvas');
@@ -333,37 +330,41 @@ function setupCanvas(canvas) {
 })();
 
 /* ============================================
-   HYBRID MOUSE FOLLOW + DRAG & DROP SYSTEM
+   HYBRID MOUSE FOLLOW + DRAG & DROP SYSTEM (DÜZELTİLMİŞ)
    ============================================ */
 (function hybridAgentSystem() {
   const agent = document.getElementById("canvas-container");
   if (!agent) return;
 
-  // Koordinat takipleri
-  let mouseX = window.innerWidth / 2;
-  let mouseY = window.innerHeight / 2;
-  let currentX = window.innerWidth / 2;
-  let currentY = window.innerHeight / 2;
+  // Başlangıç konumu: Sağ taraf ve dikeyde ortalanmış şık bir duruş
+  let mouseX = window.innerWidth - 460;
+  let mouseY = window.innerHeight / 2 - 210;
+  let currentX = window.innerWidth - 460;
+  let currentY = window.innerHeight / 2 - 210;
 
   let isDragging = false;
-  let hasBeenDragged = false; // Kullanıcı nesneyi elle manipüle etti mi?
+  let hasBeenDragged = false; 
 
-  // İlk pozisyon ataması (Ekranın sağ ortası - estetik bir başlangıç için)
+  // İlk pozisyon ataması
   agent.style.left = `${currentX}px`;
   agent.style.top = `${currentY}px`;
 
   // Sürükleme Başlangıcı
   agent.addEventListener("mousedown", (e) => {
     isDragging = true;
-    hasBeenDragged = true; // Sürüklenme başladığı an mouse takibini kalıcı kapatır
+    hasBeenDragged = true; 
     agent.classList.add("dragging");
 
-    let shiftX = e.clientX - agent.getBoundingClientRect().left - agent.offsetWidth / 2;
-    let shiftY = e.clientY - agent.getBoundingClientRect().top - agent.offsetHeight / 2;
+    let shiftX = e.clientX - agent.getBoundingClientRect().left;
+    let shiftY = e.clientY - agent.getBoundingClientRect().top;
 
     function moveAt(clientX, clientY) {
       currentX = clientX - shiftX;
       currentY = clientY - shiftY;
+      
+      if (currentX < 0) currentX = 0;
+      if (currentY < 0) currentY = 0;
+
       agent.style.left = `${currentX}px`;
       agent.style.top = `${currentY}px`;
     }
@@ -382,16 +383,15 @@ function setupCanvas(canvas) {
     }, { once: true });
   });
 
-  // Eğer kullanıcı henüz dokunmadıysa, fareyi ekranda yumuşakça takip etme motoru
+  // Kullanıcı henüz dokunmadıysa fareyi yumuşakça takip eden lerp motoru
   window.addEventListener("mousemove", (e) => {
-    if (hasBeenDragged) return; // Kullanıcı sürüklediyse takip mekanizmasını yorma
-    mouseX = e.clientX;
-    mouseY = e.clientY;
+    if (hasBeenDragged) return; 
+    mouseX = e.clientX - 210;
+    mouseY = e.clientY - 210;
   });
 
   function updateFollowAnimation() {
     if (!hasBeenDragged && !prefersReducedMotion) {
-      // Lerp (Linear Interpolation) ile akıcı/gecikmeli takip hissiyatı (%6 hız faktörü)
       currentX += (mouseX - currentX) * 0.06;
       currentY += (mouseY - currentY) * 0.06;
 
